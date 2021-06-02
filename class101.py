@@ -179,3 +179,72 @@ def hasSubtitles(driver):
 
     else:
         return False
+
+
+def getCreator(driver):
+    '''
+    Extracts and returns the text name of the creator/instructor
+    '''
+
+    creatorName = driver.find_element_by_xpath(
+        "//div[contains(@class, 'CreatorIntroSection__Title-sc-1omckp4-0 exZRo')]//strong")
+
+    return creatorName.text
+
+
+def getCreatorSocialMediaLinks(driver):
+    '''
+    Given a webdriver, extracts and returns the social media links of class creator(instructor)
+    '''
+
+    socialmedia = driver.find_elements_by_xpath(
+        "//div[contains(@class,'ChannelButtonGroup__Container-dcuo70-0 jKQAqu')]//a[contains(@class, 'LinkComponent__Anchor-gmbdn6-0 johiBf sc-dlfnbm sc-gKsewC bcaJjD BzhTL')]")
+
+    sns_links = []
+
+    # check if creator does not have social media
+    if not socialmedia:
+        return None
+
+    else:
+        for _ in socialmedia:
+            sns_links.append(_.get_attribute('href'))
+
+        return sns_links
+
+
+def getCommunityPosts(driver):
+    '''
+    Extracts and returns the number of post in community 
+    '''
+
+    communityPost = driver.find_element_by_xpath(
+        "//div[contains(@class,'ContentSectionStyle__SectionTitleColumn-sc-10cmaiq-0 CommunitySection__SectionWithTitleColumn-sc-1cvskyc-0 bocNPC dmrnCF')]//small[contains(@class,'CommunitySection__Text-sc-1cvskyc-3 gmplQK')]")
+
+    if communityPost is not None:
+        post = communityPost.text
+
+        countIndex = post.index("개")
+        postNum = post[:countIndex]
+
+        return int(postNum)
+    else:
+        return None
+
+
+def getPrices(driver):
+    '''
+
+    '''
+    element = driver.find_element_by_xpath(
+        "//div[contains(@class,'DiscountAndInstallmentInfoModal__HelpIconWrapper-sc-14kllou-0 uehYl')]")
+
+    driver.execute_script("arguments[0].click();", element)
+
+    prices = driver.find_elements_by_xpath(
+        "//dd[contains(@class,'PriceDescriptionList__DescriptionText-sc-1k21asc-3 jJijyx')]")
+
+    originalPrice = prices[0].text
+    discountAmount = prices[1].text
+
+    return originalPrice, discountAmount
