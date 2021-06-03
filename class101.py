@@ -32,6 +32,17 @@ driver = SeleniumOperation.getHeadlessDriver()
 
 # print(reviews)
 
+def extractText(webElements):
+
+    text = ""
+
+    for element in webElements:
+
+        text = text + element.text
+
+    return text
+
+
 SeleniumOperation.scrape(
     'https://class101.net/products/hf3H7C5T96VByVsA3ZRz', driver)
 
@@ -232,7 +243,7 @@ def getCommunityPosts(driver):
         return None
 
 
-def getPrices(driver):
+def getPriceInfo(driver):
     '''
 
     '''
@@ -247,4 +258,16 @@ def getPrices(driver):
     originalPrice = prices[0].text
     discountAmount = prices[1].text
 
-    return originalPrice, discountAmount
+    installment = driver.find_elements_by_xpath(
+        "//div[contains(@class, 'sc-dQppl fNfNrx PriceInfoTable__TermText-sc-1asmm9b-3 cVjuSB')]")
+    installment = extractText(installment)
+
+    discount_pct = driver.find_elements_by_xpath(
+        "//div[contains(@class,'sc-dQppl lnHFZc PriceInfoTable__DiscountText-sc-1asmm9b-4 omEfB')]")
+    discount_pct = extractText(discount_pct)
+
+    monthly = driver.find_elements_by_xpath(
+        "//h4[contains(@class,'sc-dQppl hGEcmg PriceInfoTable__PriceText-sc-1asmm9b-6 kIAPtb')]")
+    monthly = extractText(monthly)
+
+    return originalPrice, discountAmount, installment, discount_pct, monthly
