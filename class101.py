@@ -166,14 +166,18 @@ def extractFeedback(feedbacks):
     return feedback_pct, feedback_time
 
 
-def getFeedback(driver):
+def getFeedbackStats(driver):
     '''
     '''
 
     feedbacks = findFeedback(driver)
-    feedback_pct, feedback_time = extractFeedback(feedbacks)
 
-    return feedback_pct, feedback_time
+    if not feedbacks:
+        return None, None
+
+    else:
+        feedback_pct, feedback_time = extractFeedback(feedbacks)
+        return feedback_pct, feedback_time
 
 
 def hasSubtitles(driver):
@@ -243,7 +247,7 @@ def getCommunityPosts(driver):
         return None
 
 
-def getPriceInfo(driver):
+def getPrices(driver):
     '''
 
     '''
@@ -252,14 +256,17 @@ def getPriceInfo(driver):
 
     driver.execute_script("arguments[0].click();", element)
 
+    driver.implicitly_wait(3)
+
     prices = driver.find_elements_by_xpath(
         "//dd[contains(@class,'PriceDescriptionList__DescriptionText-sc-1k21asc-3 jJijyx')]")
 
     originalPrice = prices[0].text
     discountAmount = prices[1].text
 
+    # sc-dQppl fNfNrx PriceInfoTable__TermText-sc-1asmm9b-3 cVjuSB
     installment = driver.find_elements_by_xpath(
-        "//div[contains(@class, 'sc-dQppl fNfNrx PriceInfoTable__TermText-sc-1asmm9b-3 cVjuSB')]")
+        "//div[contains(@class, 'sc-dQppl iYUinv PriceInfoTable__TermText-sc-1asmm9b-3 cVjuSB')]")
     installment = extractText(installment)
 
     discount_pct = driver.find_elements_by_xpath(
@@ -271,3 +278,19 @@ def getPriceInfo(driver):
     monthly = extractText(monthly)
 
     return originalPrice, discountAmount, installment, discount_pct, monthly
+
+
+def getFeedbackNum(driver):
+    '''
+
+    '''
+    feedbackNum = driver.find_elements_by_xpath(
+        "//span[contains(@class,'sc-jSgupP ckDfJz sc-bqyKva dBtbez LiveFeedbackSectionViewController__LiveFeedbackMoreButton-sc-1ahetk9-9 bYqCJB')]/a[contains(@class,'LinkComponent__StyledLink-gmbdn6-1 hYxdXM sc-dlfnbm sc-gKsewC bcaJjD BzhTL')]/span[contains(@class,'sc-eCssSg hmocIu')]")
+
+    numFeedback = extractText(feedbackNum)
+
+    countIndex = numFeedback.index("개")
+
+    numFeedback = numFeedback[:countIndex]
+
+    return int(numFeedback)
