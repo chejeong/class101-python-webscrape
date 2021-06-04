@@ -294,3 +294,56 @@ def getFeedbackNum(driver):
     numFeedback = numFeedback[:countIndex]
 
     return int(numFeedback)
+
+
+def getStartDate(driver):
+    '''
+    Extracts and returns the start date of class
+    '''
+    startDate = driver.find_elements_by_xpath(
+        "//dd[contains(@class,'KlassSummarySection__DefinitionDescription-lcwqnj-4 jeiEOD')]")
+
+    return startDate[1].text
+
+
+def getSubject(driver):
+    '''
+    Extracts and returns the subject of the class
+    '''
+
+    subject = driver.find_elements_by_xpath(
+        "//span[contains(@class,'ChargeSectionTitle__HightLight-sc-1s0lydo-0 dJoEdj')]")
+
+    return subject[1].text
+
+
+def getTitle(driver):
+    '''
+    Extracts and returns the title of the class
+    '''
+
+    title = driver.find_elements_by_xpath(
+        "//h2[contains(@class,'sc-dQppl jhzFzM ProductHeader__Title-sc-4rgr4k-2 jkmuZi')]")
+
+    return title[1].text
+
+
+def getClassDuration(driver):
+    '''
+    Extracts and returns the duration of the class.
+    '''
+    duration = driver.find_elements_by_xpath(
+        "//div[contains(@class, 'sc-dQppl gVinuv ContentSectionCard__Title-oy7lxg-3 brYcfa')]")
+
+    return duration[0].text
+
+
+def getCoupon(driver):
+    '''
+    Extracts and returns the coupon info
+    '''
+
+    coupon = driver.find_elements_by_xpath(
+        "//div[contains(@class,'sc-dQppl gECXWx ProductCoverBadgefragment__Text-sc-11lvxb8-2 HWgNP')]")
+
+    return coupon[0].text
