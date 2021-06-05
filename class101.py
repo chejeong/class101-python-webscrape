@@ -1,9 +1,10 @@
 import SeleniumOperation
-
+import pandas as pd
 
 #url = "https://class101.net/search?category=604f1c9756c3676f1ed00304&sort=likedOrder"
 
 driver = SeleniumOperation.getHeadlessDriver()
+driver.implicitly_wait(5)
 
 #SeleniumOperation.scrape(url, driver)
 
@@ -287,13 +288,17 @@ def getFeedbackNum(driver):
     feedbackNum = driver.find_elements_by_xpath(
         "//span[contains(@class,'sc-jSgupP ckDfJz sc-bqyKva dBtbez LiveFeedbackSectionViewController__LiveFeedbackMoreButton-sc-1ahetk9-9 bYqCJB')]/a[contains(@class,'LinkComponent__StyledLink-gmbdn6-1 hYxdXM sc-dlfnbm sc-gKsewC bcaJjD BzhTL')]/span[contains(@class,'sc-eCssSg hmocIu')]")
 
-    numFeedback = extractText(feedbackNum)
+    if not feedbackNum:
+        return None
 
-    countIndex = numFeedback.index("개")
+    else:
+        numFeedback = extractText(feedbackNum)
 
-    numFeedback = numFeedback[:countIndex]
+        countIndex = numFeedback.index("개")
 
-    return int(numFeedback)
+        numFeedback = numFeedback[:countIndex]
+
+        return int(numFeedback)
 
 
 def getStartDate(driver):
@@ -347,3 +352,46 @@ def getCoupon(driver):
         "//div[contains(@class,'sc-dQppl gECXWx ProductCoverBadgefragment__Text-sc-11lvxb8-2 HWgNP')]")
 
     return coupon[0].text
+
+
+'''
+class_name -> category, instructor_id, 
+coupon, time
+'''
+
+
+def getClassInfo(driver):
+    '''
+    Constructs and returns pandas DataFrame containing class information.
+    '''
+    className = getTitle(driver)
+    topic = getSubject(driver)
+    level = getClassLevel(driver)
+    duration = getClassDuration(driver)
+    chapters, lessons = getChapterLessons(driver)
+    startDate = getStartDate(driver)
+    subtitles = hasSubtitles(driver)
+    reviewNum, satisfaction = getReviewsSatisfaction(driver)
+    communityPosts = getCommunityPosts(driver)
+    likes = getLikes(driver)
+    feedbackPct, feedbackTime = getFeedbackStats(driver)
+    feedbackNum = getFeedbackNum(driver)
+    originalPrice, discountAmount, installment, discountPct, monthly = getPrices(
+        driver)
+    coupon = getCoupon(driver)
+
+    classInfo = pd.DataFrame({'className': [className], 'topic': [topic], 'level': [level], 'duration': [duration],
+                             'chapters': [chapters], 'lessons': [lessons], 'startDate': [startDate], 'subtitles': [subtitles],
+                              'reviewNum': [reviewNum], 'satisfaction': [satisfaction], 'communityPosts': [communityPosts], 'likes': [likes],
+                              'feedbackPct': [feedbackPct], 'feedbackTime': [feedbackTime], 'feedbackNum': [feedbackNum],
+                              'originalPrice': [originalPrice], 'discountAmount': [discountAmount], 'installmentPeriod': [installment],
+                              'discountPct': [discountPct], 'monthlyPayment': [monthly], 'coupon': [coupon]})
+
+    return classInfo
+
+
+classInfo = getClassInfo(driver)
+
+print(classInfo)
+
+driver.quit()
