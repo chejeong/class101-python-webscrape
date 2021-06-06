@@ -1,37 +1,14 @@
 import SeleniumOperation
 import pandas as pd
+import time
+from datetime import datetime
 
-#url = "https://class101.net/search?category=604f1c9756c3676f1ed00304&sort=likedOrder"
+
+url = "https://class101.net/search?category=604f1c9756c3676f1ed00304"
 
 driver = SeleniumOperation.getHeadlessDriver()
 driver.implicitly_wait(5)
 
-#SeleniumOperation.scrape(url, driver)
-
-# priceResults = driver.find_elements_by_xpath(
-#     "//strong[contains(@class,'SellingPrice-yffb6l-0 cUbeAw')]")
-
-
-# clicking on individual class
-# classAddress = driver.find_elements_by_xpath(
-#     "//a[contains(@class, 'ProductCardfragment__HoverStyledLink-sc-1cja13i-0 gfCFNQ')]")
-
-# addressList = []
-
-# for element in classAddress:
-#     addressList.append(element.get_attribute('href'))
-
-# print(addressList)
-# print(len(addressList))
-
-
-# driver.get(addressList[0])
-
-# reviews = driver.find_element_by_xpath(
-#     "//dd[contains(@class, 'PostReviewSectionViewController__PostReviewInfoDescription-sc-1khhvgt-5 lhQFbC')]").text
-
-
-# print(reviews)
 
 def extractText(webElements):
 
@@ -42,10 +19,6 @@ def extractText(webElements):
         text = text + element.text
 
     return text
-
-
-SeleniumOperation.scrape(
-    'https://class101.net/products/hf3H7C5T96VByVsA3ZRz', driver)
 
 
 def getReviewsSatisfaction(driver):
@@ -59,15 +32,6 @@ def getReviewsSatisfaction(driver):
     satisfaction = reviews[1].text
 
     return reviewNum, satisfaction
-
-
-# class_df = pd.DataFrame(columns=['reviews', 'satisfaction'])
-
-# aRow = {'reviews': reviewNum, 'satisfaction': satisfaction}
-
-# class_df = class_df.append(aRow, ignore_index=True)
-
-# print(class_df)
 
 
 def findChapterLessons(driver):
@@ -97,7 +61,7 @@ def extractChapterLessons(textExtract):
     chapter = textExtract[:chapterIndex-1]
     lesson = textExtract[chapterIndex+9:lessonIndex-1]
 
-    return int(chapter), int(lesson)
+    return chapter, lesson
 
 
 def getChapterLessons(driver):
@@ -131,7 +95,7 @@ def getLikes(driver):
     likes = driver.find_elements_by_xpath(
         "//button[contains(@class, 'sc-hKgILt eFWsxw sc-bqyKva glLlrc SalesProductInfoTable__WishlistButton-sc-1cslumm-2 bUSrQo')]/span[contains(@class, 'sc-eCssSg hmocIu')]")
 
-    return int(likes[1].text)
+    return likes[1].text
 
 
 def findFeedback(driver):
@@ -216,7 +180,8 @@ def getCreatorSocialMediaLinks(driver):
     socialmedia = driver.find_elements_by_xpath(
         "//div[contains(@class,'ChannelButtonGroup__Container-dcuo70-0 jKQAqu')]//a[contains(@class, 'LinkComponent__Anchor-gmbdn6-0 johiBf sc-dlfnbm sc-gKsewC bcaJjD BzhTL')]")
 
-    sns_links = []
+    #sns_links = []
+    sns_links = ""
 
     # check if creator does not have social media
     if not socialmedia:
@@ -224,7 +189,13 @@ def getCreatorSocialMediaLinks(driver):
 
     else:
         for _ in socialmedia:
-            sns_links.append(_.get_attribute('href'))
+            # sns_links.append(_.get_attribute('href'))
+
+            if sns_links == "":
+                sns_links = sns_links + _.get_attribute('href')
+
+            else:
+                sns_links = sns_links + ', ' + _.get_attribute('href')
 
         return sns_links
 
@@ -243,7 +214,7 @@ def getCommunityPosts(driver):
         countIndex = post.index("개")
         postNum = post[:countIndex]
 
-        return int(postNum)
+        return postNum
     else:
         return None
 
@@ -255,15 +226,19 @@ def getPrices(driver):
     element = driver.find_element_by_xpath(
         "//div[contains(@class,'DiscountAndInstallmentInfoModal__HelpIconWrapper-sc-14kllou-0 uehYl')]")
 
+    driver.implicitly_wait(5)
+
     driver.execute_script("arguments[0].click();", element)
 
-    driver.implicitly_wait(3)
+    time.sleep(2)
 
     prices = driver.find_elements_by_xpath(
         "//dd[contains(@class,'PriceDescriptionList__DescriptionText-sc-1k21asc-3 jJijyx')]")
 
     originalPrice = prices[0].text
     discountAmount = prices[1].text
+    couponDiscount = prices[2].text
+    finalPrice = prices[3]
 
     # sc-dQppl fNfNrx PriceInfoTable__TermText-sc-1asmm9b-3 cVjuSB
     installment = driver.find_elements_by_xpath(
@@ -278,7 +253,7 @@ def getPrices(driver):
         "//h4[contains(@class,'sc-dQppl hGEcmg PriceInfoTable__PriceText-sc-1asmm9b-6 kIAPtb')]")
     monthly = extractText(monthly)
 
-    return originalPrice, discountAmount, installment, discount_pct, monthly
+    return originalPrice, discountAmount, couponDiscount, installment, discount_pct, finalPrice, monthly
 
 
 def getFeedbackNum(driver):
@@ -298,7 +273,7 @@ def getFeedbackNum(driver):
 
         numFeedback = numFeedback[:countIndex]
 
-        return int(numFeedback)
+        return numFeedback
 
 
 def getStartDate(driver):
@@ -354,16 +329,11 @@ def getCoupon(driver):
     return coupon[0].text
 
 
-'''
-class_name -> category, instructor_id, 
-coupon, time
-'''
-
-
-def getClassInfo(driver):
+def getClassInfo(driver, url):
     '''
     Constructs and returns pandas DataFrame containing class information.
     '''
+
     className = getTitle(driver)
     topic = getSubject(driver)
     level = getClassLevel(driver)
@@ -371,27 +341,91 @@ def getClassInfo(driver):
     chapters, lessons = getChapterLessons(driver)
     startDate = getStartDate(driver)
     subtitles = hasSubtitles(driver)
+    creatorName = getCreator(driver)
+    creatorSocialMedia = getCreatorSocialMediaLinks(driver)
     reviewNum, satisfaction = getReviewsSatisfaction(driver)
     communityPosts = getCommunityPosts(driver)
     likes = getLikes(driver)
     feedbackPct, feedbackTime = getFeedbackStats(driver)
     feedbackNum = getFeedbackNum(driver)
-    originalPrice, discountAmount, installment, discountPct, monthly = getPrices(
-        driver)
     coupon = getCoupon(driver)
+    originalPrice, discountAmount, couponDiscount, installment, discountPct, finalPrice, monthly = getPrices(
+        driver)
 
     classInfo = pd.DataFrame({'className': [className], 'topic': [topic], 'level': [level], 'duration': [duration],
-                             'chapters': [chapters], 'lessons': [lessons], 'startDate': [startDate], 'subtitles': [subtitles],
-                              'reviewNum': [reviewNum], 'satisfaction': [satisfaction], 'communityPosts': [communityPosts], 'likes': [likes],
-                              'feedbackPct': [feedbackPct], 'feedbackTime': [feedbackTime], 'feedbackNum': [feedbackNum],
-                              'originalPrice': [originalPrice], 'discountAmount': [discountAmount], 'installmentPeriod': [installment],
-                              'discountPct': [discountPct], 'monthlyPayment': [monthly], 'coupon': [coupon]})
+                             'chapters': [chapters], 'lessons': [lessons], 'startDate': [startDate], 'subtitles': [subtitles], 'creatorName': [creatorName],
+                              'creatorSocialMedia': [creatorSocialMedia], 'reviewNum': [reviewNum], 'satisfaction': [satisfaction],
+                              'communityPosts': [communityPosts], 'likes': [likes], 'feedbackPct': [feedbackPct], 'feedbackTime': [feedbackTime],
+                              'feedbackNum': [feedbackNum], 'originalPrice': [originalPrice], 'discountAmount': [discountAmount], 'couponDiscount': [couponDiscount],
+                              'installmentPeriod': [installment], 'discountPct': [discountPct], 'finalPrice': [finalPrice], 'monthlyPayment': [monthly], 'coupon': [coupon]})
 
     return classInfo
 
 
-classInfo = getClassInfo(driver)
+# classInfo = getClassInfo(driver)
+# classInfo.to_csv("/Users/CheHoon/Desktop/sample.csv", encoding="utf-8")
 
-print(classInfo)
+def scrapePage(driver, url):
+    '''
+    Given url of a category's main page, scrapes the classInfos in all pages and exports data as csv.
+    '''
+
+    SeleniumOperation.scrape(driver, url)
+
+    # clicking on individual class
+    classAddress = driver.find_elements_by_xpath(
+        "//a[contains(@class, 'ProductCardfragment__HoverStyledLink-sc-1cja13i-0 gfCFNQ')]")
+
+    addressList = []
+
+    for element in classAddress:
+        addressList.append(element.get_attribute('href'))
+
+    print(addressList)
+    print(len(addressList))
+
+    classInfo = pd.DataFrame(columns=['className', 'topic', 'level', 'duration',
+                             'chapters', 'lessons', 'startDate', 'subtitles', 'creatorName', 'creatorSocialMedia',
+                                      'reviewNum', 'satisfaction', 'communityPosts', 'likes',
+                                      'feedbackPct', 'feedbackTime', 'feedbackNum',
+                                      'originalPrice', 'discountAmount', 'couponDiscount', 'installmentPeriod',
+                                      'discountPct', 'monthlyPayment', 'coupon'])
+
+    for address in addressList:
+        SeleniumOperation.scrape(driver, address)
+        classDF = getClassInfo(driver, address)
+        classInfo = classInfo.append(classDF)
+
+    classInfo.to_csv("/Users/CheHoon/Desktop/sample.csv", encoding="utf-8")
+
+
+now = datetime.now()
+current_time = now.strftime("%H:%M:%S")
+print("Current Time =", current_time)
+
+scrapePage(driver, url)
+
+now = datetime.now()
+current_time = now.strftime("%H:%M:%S")
+print("Current Time =", current_time)
+
+# element = driver.find_elements_by_xpath(
+#     "//button[@class='sc-hKgILt eFWsxw sc-crrsfI MdKCt sc-dtwoBo inCwUZ']")
+
+
+# driver.execute_script("arguments[0].click();", element[0])
+
+# SeleniumOperation.scroll(driver, 10)
+
+# element = driver.find_elements_by_xpath(
+#     "//button[@class='sc-hKgILt eFWsxw sc-crrsfI MdKCt sc-dtwoBo inCwUZ']")
+
+# print(len(element))
+
+# for _ in element:
+#     print(_)
+
+# driver.execute_script("arguments[0].click();", element[1])
+
 
 driver.quit()
