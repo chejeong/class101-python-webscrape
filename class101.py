@@ -4,7 +4,7 @@ import time
 from datetime import datetime
 
 
-url = "https://class101.net/search?category=604f1c9756c3676f1ed00304"
+url = "https://class101.net/search?category=604f1c9756c3676f1ed00305"
 
 driver = SeleniumOperation.getHeadlessDriver()
 driver.implicitly_wait(5)
@@ -226,7 +226,7 @@ def getPrices(driver):
     element = driver.find_element_by_xpath(
         "//div[contains(@class,'DiscountAndInstallmentInfoModal__HelpIconWrapper-sc-14kllou-0 uehYl')]")
 
-    driver.implicitly_wait(5)
+    # driver.implicitly_wait(5)
 
     driver.execute_script("arguments[0].click();", element)
 
@@ -329,11 +329,12 @@ def getCoupon(driver):
     return coupon[0].text
 
 
-def getClassInfo(driver, url):
+def getClassInfo(driver, url, category):
     '''
     Constructs and returns pandas DataFrame containing class information.
     '''
 
+    referenceDate = datetime.today().strftime('%Y-%m-%d')
     className = getTitle(driver)
     topic = getSubject(driver)
     level = getClassLevel(driver)
@@ -352,12 +353,13 @@ def getClassInfo(driver, url):
     originalPrice, discountAmount, couponDiscount, installment, discountPct, finalPrice, monthly = getPrices(
         driver)
 
-    classInfo = pd.DataFrame({'className': [className], 'topic': [topic], 'level': [level], 'duration': [duration],
+    classInfo = pd.DataFrame({'className': [className], 'category': [category], 'topic': [topic], 'level': [level], 'duration': [duration],
                              'chapters': [chapters], 'lessons': [lessons], 'startDate': [startDate], 'subtitles': [subtitles], 'creatorName': [creatorName],
                               'creatorSocialMedia': [creatorSocialMedia], 'reviewNum': [reviewNum], 'satisfaction': [satisfaction],
                               'communityPosts': [communityPosts], 'likes': [likes], 'feedbackPct': [feedbackPct], 'feedbackTime': [feedbackTime],
                               'feedbackNum': [feedbackNum], 'originalPrice': [originalPrice], 'discountAmount': [discountAmount], 'couponDiscount': [couponDiscount],
-                              'installmentPeriod': [installment], 'discountPct': [discountPct], 'finalPrice': [finalPrice], 'monthlyPayment': [monthly], 'coupon': [coupon]})
+                              'installmentPeriod': [installment], 'discountPct': [discountPct], 'finalPrice': [finalPrice],
+                              'monthlyPayment': [monthly], 'coupon': [coupon], 'referenceDate': [referenceDate]})
 
     return classInfo
 
@@ -365,12 +367,11 @@ def getClassInfo(driver, url):
 # classInfo = getClassInfo(driver)
 # classInfo.to_csv("/Users/CheHoon/Desktop/sample.csv", encoding="utf-8")
 
-def scrapePage(driver, url):
+def scrapePage(driver, category):
     '''
-    Given url of a category's main page, scrapes the classInfos in all pages and exports data as csv.
+    Scrapes all the classInfos in a page and exports data as csv.
+    Returns accumulated pandas dataframe and number of classes in the page.
     '''
-
-    SeleniumOperation.scrape(driver, url)
 
     # clicking on individual class
     classAddress = driver.find_elements_by_xpath(
@@ -381,51 +382,98 @@ def scrapePage(driver, url):
     for element in classAddress:
         addressList.append(element.get_attribute('href'))
 
-    print(addressList)
-    print(len(addressList))
-
-    classInfo = pd.DataFrame(columns=['className', 'topic', 'level', 'duration',
+    classInfo = pd.DataFrame(columns=['className', 'category', 'topic', 'level', 'duration',
                              'chapters', 'lessons', 'startDate', 'subtitles', 'creatorName', 'creatorSocialMedia',
                                       'reviewNum', 'satisfaction', 'communityPosts', 'likes',
                                       'feedbackPct', 'feedbackTime', 'feedbackNum',
                                       'originalPrice', 'discountAmount', 'couponDiscount', 'installmentPeriod',
-                                      'discountPct', 'monthlyPayment', 'coupon'])
+                                      'discountPct', 'monthlyPayment', 'coupon', 'referenceDate'])
+
+    counter = 1
+
+    driver.execute_script(
+        "window.open()")
+
+    driver.switch_to.window(driver.window_handles[1])
 
     for address in addressList:
         SeleniumOperation.scrape(driver, address)
-        classDF = getClassInfo(driver, address)
+        classDF = getClassInfo(driver, address, category)
         classInfo = classInfo.append(classDF)
+        print("scraped element number: ", counter)
+        counter = counter + 1
 
-    classInfo.to_csv("/Users/CheHoon/Desktop/sample.csv", encoding="utf-8")
+    driver.close()
+
+    driver.switch_to.window(driver.window_handles[0])
+    # classInfo.to_csv(
+    #     f"/Users/CheHoon/Desktop/{category}.csv", encoding="utf-8")
+
+    return classInfo, len(addressList)
+
+
+def scrapeAllPages(driver, mainURL, category, directoryPath):
+    '''
+    Scrapes and exports all classes in a category as csv files.
+    '''
+
+    # keep track of pageNum
+    pageNum = 1
+
+    SeleniumOperation.scrape(driver, mainURL)
+    classInfo, numClasses = scrapePage(driver, category)
+
+    buttons = driver.find_elements_by_xpath(
+        "//button[@class='sc-hKgILt eFWsxw sc-crrsfI MdKCt sc-dtwoBo inCwUZ']")
+
+    numButtons = len(buttons)
+
+    # export first page as csv
+    classInfo.to_csv(
+        f"{directoryPath}/{category}-{pageNum}.csv", encoding="utf-8")
+
+    print(f"completed page: {pageNum}")
+
+    if numButtons == 0:
+        driver.quit()
+        return
+
+    else:
+        pageNum = pageNum + 1
+        driver.execute_script("arguments[0].click();", buttons[0])
+
+    while True:
+
+        SeleniumOperation.scroll(driver, 8)
+        classInfo, numClasses = scrapePage(driver, category)
+        buttons = driver.find_elements_by_xpath(
+            "//button[@class='sc-hKgILt eFWsxw sc-crrsfI MdKCt sc-dtwoBo inCwUZ']")
+        numButtons = len(buttons)
+
+        classInfo.to_csv(
+            f"{directoryPath}/{category}-{pageNum}.csv", encoding="utf-8")
+
+        pageNum = pageNum + 1
+        print(f"completed page: {pageNum}")
+
+        if numClasses < 30:
+            print("completed last page")
+            break
+        if numClasses == 30 and numButtons == 1:
+            print("completed last page")
+            break
+
+        driver.execute_script("arguments[0].click();", buttons[1])
 
 
 now = datetime.now()
 current_time = now.strftime("%H:%M:%S")
 print("Current Time =", current_time)
 
-scrapePage(driver, url)
+scrapeAllPages(driver, url, "pen", "/Users/CheHoon/Desktop/class101Data")
 
 now = datetime.now()
 current_time = now.strftime("%H:%M:%S")
 print("Current Time =", current_time)
-
-# element = driver.find_elements_by_xpath(
-#     "//button[@class='sc-hKgILt eFWsxw sc-crrsfI MdKCt sc-dtwoBo inCwUZ']")
-
-
-# driver.execute_script("arguments[0].click();", element[0])
-
-# SeleniumOperation.scroll(driver, 10)
-
-# element = driver.find_elements_by_xpath(
-#     "//button[@class='sc-hKgILt eFWsxw sc-crrsfI MdKCt sc-dtwoBo inCwUZ']")
-
-# print(len(element))
-
-# for _ in element:
-#     print(_)
-
-# driver.execute_script("arguments[0].click();", element[1])
-
 
 driver.quit()
