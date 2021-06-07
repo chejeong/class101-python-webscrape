@@ -1,13 +1,14 @@
 import SeleniumOperation
+from selenium.common.exceptions import NoSuchElementException
 import pandas as pd
 import time
 from datetime import datetime
 
 
-url = "https://class101.net/search?category=604f1c9756c3676f1ed00305"
+# url = "https://class101.net/search?category=604f1c9756c3676f1ed00305"
 
-driver = SeleniumOperation.getHeadlessDriver()
-driver.implicitly_wait(5)
+# driver = SeleniumOperation.getHeadlessDriver()
+# driver.implicitly_wait(5)
 
 
 def extractText(webElements):
@@ -23,25 +24,45 @@ def extractText(webElements):
 
 def getReviewsSatisfaction(driver):
     '''
-
+    Returns the number of reviews submitted and the satisfaction percentage of the class.
     '''
-    reviews = driver.find_elements_by_xpath(
-        "//dd[contains(@class, 'PostReviewSectionViewController__PostReviewInfoDescription-sc-1khhvgt-5 lhQFbC')]")
 
-    reviewNum = reviews[0].text
-    satisfaction = reviews[1].text
+    reviews = None
 
-    return reviewNum, satisfaction
+    try:
+        reviews = driver.find_elements_by_xpath(
+            "//dd[contains(@class, 'PostReviewSectionViewController__PostReviewInfoDescription-sc-1khhvgt-5 lhQFbC')]")
+    except NoSuchElementException:
+        pass
+
+    # if class does not have any reviews
+    if not reviews:
+        return None, None
+
+    else:
+        reviewNum = reviews[0].text
+        satisfaction = reviews[1].text
+
+        return reviewNum, satisfaction
 
 
 def findChapterLessons(driver):
     '''
     Given a selenium driver, Returns string containing number of chapters and lectures
     '''
-    chapterLecture = driver.find_element_by_xpath(
-        "//dd[contains(@class, 'KlassSummarySection__DefinitionDescription-lcwqnj-4 jeiEOD')]")
+    chapterLecture = None
 
-    return chapterLecture.text
+    try:
+        chapterLecture = driver.find_element_by_xpath(
+            "//dd[contains(@class, 'KlassSummarySection__DefinitionDescription-lcwqnj-4 jeiEOD')]")
+    except NoSuchElementException:
+        pass
+
+    if not chapterLecture:
+        return None
+
+    else:
+        return chapterLecture.text
 
 
 def extractChapterLessons(textExtract):
@@ -66,51 +87,78 @@ def extractChapterLessons(textExtract):
 
 def getChapterLessons(driver):
     '''
-
+    Returns the number of chapters and lessons in a class
 
     '''
 
     textExtract = findChapterLessons(driver)
 
-    chapter, lesson = extractChapterLessons(textExtract)
+    if not textExtract:
+        return None, None
 
-    return chapter, lesson
+    else:
+        chapter, lesson = extractChapterLessons(textExtract)
+        return chapter, lesson
 
 
 def getClassLevel(driver):
     '''
-
+    Returns the class level (difficulty of class)
     '''
+    classLevel = None
 
-    classLevel = driver.find_element_by_xpath(
-        "//span[contains(@class, 'ChargeSectionTitle__HightLight-sc-1s0lydo-0 dJoEdj')]")
+    try:
+        classLevel = driver.find_element_by_xpath(
+            "//span[contains(@class, 'ChargeSectionTitle__HightLight-sc-1s0lydo-0 dJoEdj')]")
+    except NoSuchElementException:
+        pass
 
-    return classLevel.text
+    if not classLevel:
+        return None
+
+    else:
+        return classLevel.text
 
 
 def getLikes(driver):
     '''
-
+    Returns the number of likes a class received.
     '''
-    likes = driver.find_elements_by_xpath(
-        "//button[contains(@class, 'sc-hKgILt eFWsxw sc-bqyKva glLlrc SalesProductInfoTable__WishlistButton-sc-1cslumm-2 bUSrQo')]/span[contains(@class, 'sc-eCssSg hmocIu')]")
+    likes = None
 
-    return likes[1].text
+    try:
+        likes = driver.find_elements_by_xpath(
+            "//button[contains(@class, 'sc-hKgILt eFWsxw sc-bqyKva glLlrc SalesProductInfoTable__WishlistButton-sc-1cslumm-2 bUSrQo')]/span[contains(@class, 'sc-eCssSg hmocIu')]")
+    except NoSuchElementException:
+        pass
+
+    if not likes:
+        return None
+
+    else:
+        return likes[1].text
 
 
 def findFeedback(driver):
     '''
-
+    Returns the feedback webElement.
     '''
 
-    feedbacks = driver.find_elements_by_xpath(
-        "//div[contains(@class, 'LiveFeedbackSectionViewController__LiveFeedbackStatusItem-sc-1ahetk9-4 cUJPkM')]")
+    feedbacks = None
+
+    try:
+        feedbacks = driver.find_elements_by_xpath(
+            "//div[contains(@class, 'LiveFeedbackSectionViewController__LiveFeedbackStatusItem-sc-1ahetk9-4 cUJPkM')]")
+    except NoSuchElementException:
+        pass
 
     return feedbacks
 
 
 def extractFeedback(feedbacks):
     '''
+    Extracts and returns the percentage of feedbacks instructor gives, 
+    and the average time it takes for instructor to leave feedback.
     '''
 
     feedback_pct = None
@@ -133,6 +181,8 @@ def extractFeedback(feedbacks):
 
 def getFeedbackStats(driver):
     '''
+    Returns the percentage of feedbacks instructor gives, 
+    and the average time it takes for instructor to leave feedback.
     '''
 
     feedbacks = findFeedback(driver)
@@ -147,38 +197,58 @@ def getFeedbackStats(driver):
 
 def hasSubtitles(driver):
     '''
+    Returns boolean value of whether class has subtitles.
     '''
+    hasSubtitles = None
 
-    hasSubtitles = driver.find_elements_by_xpath(
-        "//dd[contains(@class, 'KlassSummarySection__DefinitionDescription-lcwqnj-4 jeiEOD')]")
+    try:
+        hasSubtitles = driver.find_elements_by_xpath(
+            "//dd[contains(@class, 'KlassSummarySection__DefinitionDescription-lcwqnj-4 jeiEOD')]")
+    except NoSuchElementException:
+        pass
 
-    subtitles = hasSubtitles[2].text.upper()
-
-    if subtitles == "YES":
-        return True
+    if not hasSubtitles:
+        return None
 
     else:
-        return False
+        subtitles = hasSubtitles[2].text.upper()
+
+        if subtitles == "YES":
+            return True
+        else:
+            return False
 
 
 def getCreator(driver):
     '''
     Extracts and returns the text name of the creator/instructor
     '''
+    creatorName = None
 
-    creatorName = driver.find_element_by_xpath(
-        "//div[contains(@class, 'CreatorIntroSection__Title-sc-1omckp4-0 exZRo')]//strong")
+    try:
+        creatorName = driver.find_element_by_xpath(
+            "//div[contains(@class, 'CreatorIntroSection__Title-sc-1omckp4-0 exZRo')]//strong")
+    except NoSuchElementException:
+        pass
 
-    return creatorName.text
+    if not creatorName:
+        return None
+
+    else:
+        return creatorName.text
 
 
 def getCreatorSocialMediaLinks(driver):
     '''
     Given a webdriver, extracts and returns the social media links of class creator(instructor)
     '''
+    socialmedia = None
 
-    socialmedia = driver.find_elements_by_xpath(
-        "//div[contains(@class,'ChannelButtonGroup__Container-dcuo70-0 jKQAqu')]//a[contains(@class, 'LinkComponent__Anchor-gmbdn6-0 johiBf sc-dlfnbm sc-gKsewC bcaJjD BzhTL')]")
+    try:
+        socialmedia = driver.find_elements_by_xpath(
+            "//div[contains(@class,'ChannelButtonGroup__Container-dcuo70-0 jKQAqu')]//a[contains(@class, 'LinkComponent__Anchor-gmbdn6-0 johiBf sc-dlfnbm sc-gKsewC bcaJjD BzhTL')]")
+    except NoSuchElementException:
+        pass
 
     #sns_links = []
     sns_links = ""
@@ -205,23 +275,29 @@ def getCommunityPosts(driver):
     Extracts and returns the number of post in community 
     '''
 
-    communityPost = driver.find_element_by_xpath(
-        "//div[contains(@class,'ContentSectionStyle__SectionTitleColumn-sc-10cmaiq-0 CommunitySection__SectionWithTitleColumn-sc-1cvskyc-0 bocNPC dmrnCF')]//small[contains(@class,'CommunitySection__Text-sc-1cvskyc-3 gmplQK')]")
+    communityPost = None
+
+    # handling case when there is no communitypoast element
+    try:
+        communityPost = driver.find_element_by_xpath(
+            "//div[contains(@class,'ContentSectionStyle__SectionTitleColumn-sc-10cmaiq-0 CommunitySection__SectionWithTitleColumn-sc-1cvskyc-0 bocNPC dmrnCF')]//small[contains(@class,'CommunitySection__Text-sc-1cvskyc-3 gmplQK')]")
+    except NoSuchElementException:
+        pass
 
     if communityPost is not None:
         post = communityPost.text
-
         countIndex = post.index("개")
         postNum = post[:countIndex]
+        return post
 
-        return postNum
     else:
         return None
 
 
 def getPrices(driver):
     '''
-
+    Returns the price information of a class: 
+    original price, discounts, installment period, final price
     '''
     element = driver.find_element_by_xpath(
         "//div[contains(@class,'DiscountAndInstallmentInfoModal__HelpIconWrapper-sc-14kllou-0 uehYl')]")
@@ -238,7 +314,7 @@ def getPrices(driver):
     originalPrice = prices[0].text
     discountAmount = prices[1].text
     couponDiscount = prices[2].text
-    finalPrice = prices[3]
+    finalPrice = prices[3].text
 
     # sc-dQppl fNfNrx PriceInfoTable__TermText-sc-1asmm9b-3 cVjuSB
     installment = driver.find_elements_by_xpath(
@@ -258,19 +334,21 @@ def getPrices(driver):
 
 def getFeedbackNum(driver):
     '''
-
+    Returns the number of feedbacks of a class
     '''
-    feedbackNum = driver.find_elements_by_xpath(
-        "//span[contains(@class,'sc-jSgupP ckDfJz sc-bqyKva dBtbez LiveFeedbackSectionViewController__LiveFeedbackMoreButton-sc-1ahetk9-9 bYqCJB')]/a[contains(@class,'LinkComponent__StyledLink-gmbdn6-1 hYxdXM sc-dlfnbm sc-gKsewC bcaJjD BzhTL')]/span[contains(@class,'sc-eCssSg hmocIu')]")
+
+    try:
+        feedbackNum = driver.find_elements_by_xpath(
+            "//span[contains(@class,'sc-jSgupP ckDfJz sc-bqyKva dBtbez LiveFeedbackSectionViewController__LiveFeedbackMoreButton-sc-1ahetk9-9 bYqCJB')]/a[contains(@class,'LinkComponent__StyledLink-gmbdn6-1 hYxdXM sc-dlfnbm sc-gKsewC bcaJjD BzhTL')]/span[contains(@class,'sc-eCssSg hmocIu')]")
+    except NoSuchElementException:
+        pass
 
     if not feedbackNum:
         return None
 
     else:
         numFeedback = extractText(feedbackNum)
-
         countIndex = numFeedback.index("개")
-
         numFeedback = numFeedback[:countIndex]
 
         return numFeedback
@@ -280,10 +358,20 @@ def getStartDate(driver):
     '''
     Extracts and returns the start date of class
     '''
-    startDate = driver.find_elements_by_xpath(
-        "//dd[contains(@class,'KlassSummarySection__DefinitionDescription-lcwqnj-4 jeiEOD')]")
 
-    return startDate[1].text
+    startDate = None
+
+    try:
+        startDate = driver.find_elements_by_xpath(
+            "//dd[contains(@class,'KlassSummarySection__DefinitionDescription-lcwqnj-4 jeiEOD')]")
+    except NoSuchElementException:
+        pass
+
+    if not startDate:
+        return None
+
+    else:
+        return startDate[1].text
 
 
 def getSubject(driver):
@@ -291,19 +379,30 @@ def getSubject(driver):
     Extracts and returns the subject of the class
     '''
 
-    subject = driver.find_elements_by_xpath(
-        "//span[contains(@class,'ChargeSectionTitle__HightLight-sc-1s0lydo-0 dJoEdj')]")
+    try:
+        subject = driver.find_elements_by_xpath(
+            "//span[contains(@class,'ChargeSectionTitle__HightLight-sc-1s0lydo-0 dJoEdj')]")
+    except NoSuchElementException:
+        pass
 
-    return subject[1].text
+    if not subject:
+        return None
+
+    else:
+        return subject[1].text
 
 
 def getTitle(driver):
     '''
     Extracts and returns the title of the class
     '''
+    title = None
 
-    title = driver.find_elements_by_xpath(
-        "//h2[contains(@class,'sc-dQppl jhzFzM ProductHeader__Title-sc-4rgr4k-2 jkmuZi')]")
+    try:
+        title = driver.find_elements_by_xpath(
+            "//h2[contains(@class,'sc-dQppl jhzFzM ProductHeader__Title-sc-4rgr4k-2 jkmuZi')]")
+    except NoSuchElementException:
+        pass
 
     return title[1].text
 
@@ -312,8 +411,17 @@ def getClassDuration(driver):
     '''
     Extracts and returns the duration of the class.
     '''
-    duration = driver.find_elements_by_xpath(
-        "//div[contains(@class, 'sc-dQppl gVinuv ContentSectionCard__Title-oy7lxg-3 brYcfa')]")
+
+    duration = None
+
+    try:
+        duration = driver.find_elements_by_xpath(
+            "//div[contains(@class, 'sc-dQppl gVinuv ContentSectionCard__Title-oy7lxg-3 brYcfa')]")
+    except NoSuchElementException:
+        pass
+
+    if not duration:
+        return None
 
     return duration[0].text
 
@@ -322,11 +430,19 @@ def getCoupon(driver):
     '''
     Extracts and returns the coupon info
     '''
+    coupon = None
 
-    coupon = driver.find_elements_by_xpath(
-        "//div[contains(@class,'sc-dQppl gECXWx ProductCoverBadgefragment__Text-sc-11lvxb8-2 HWgNP')]")
+    try:
+        coupon = driver.find_elements_by_xpath(
+            "//div[contains(@class,'sc-dQppl gECXWx ProductCoverBadgefragment__Text-sc-11lvxb8-2 HWgNP')]")
+    except NoSuchElementException:
+        pass
 
-    return coupon[0].text
+    if not coupon:
+        return None
+
+    else:
+        return coupon[0].text
 
 
 def getClassInfo(driver, url, category):
@@ -380,7 +496,11 @@ def scrapePage(driver, category):
     addressList = []
 
     for element in classAddress:
-        addressList.append(element.get_attribute('href'))
+        classlink = element.get_attribute('href')
+
+        # adding classes that already started
+        if 'products' in classlink:
+            addressList.append(classlink)
 
     classInfo = pd.DataFrame(columns=['className', 'category', 'topic', 'level', 'duration',
                              'chapters', 'lessons', 'startDate', 'subtitles', 'creatorName', 'creatorSocialMedia',
@@ -466,14 +586,14 @@ def scrapeAllPages(driver, mainURL, category, directoryPath):
         driver.execute_script("arguments[0].click();", buttons[1])
 
 
-now = datetime.now()
-current_time = now.strftime("%H:%M:%S")
-print("Current Time =", current_time)
+# now = datetime.now()
+# current_time = now.strftime("%H:%M:%S")
+# print("Current Time =", current_time)
 
-scrapeAllPages(driver, url, "pen", "/Users/CheHoon/Desktop/class101Data")
+# scrapeAllPages(driver, url, "pen", "/Users/CheHoon/Desktop/class101Data")
 
-now = datetime.now()
-current_time = now.strftime("%H:%M:%S")
-print("Current Time =", current_time)
+# now = datetime.now()
+# current_time = now.strftime("%H:%M:%S")
+# print("Current Time =", current_time)
 
-driver.quit()
+# driver.quit()
