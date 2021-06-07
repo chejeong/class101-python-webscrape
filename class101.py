@@ -299,14 +299,20 @@ def getPrices(driver):
     Returns the price information of a class: 
     original price, discounts, installment period, final price
     '''
-    element = driver.find_element_by_xpath(
-        "//div[contains(@class,'DiscountAndInstallmentInfoModal__HelpIconWrapper-sc-14kllou-0 uehYl')]")
 
-    # driver.implicitly_wait(5)
+    element = None
 
-    driver.execute_script("arguments[0].click();", element)
+    try:
+        element = driver.find_element_by_xpath(
+            "//div[contains(@class,'DiscountAndInstallmentInfoModal__HelpIconWrapper-sc-14kllou-0 uehYl')]")
+        driver.execute_script("arguments[0].click();", element)
+    except NoSuchElementException:
+        pass
 
     time.sleep(2)
+
+    if not element:
+        return None, None, None, None, None, None, None
 
     prices = driver.find_elements_by_xpath(
         "//dd[contains(@class,'PriceDescriptionList__DescriptionText-sc-1k21asc-3 jJijyx')]")
