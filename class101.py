@@ -120,9 +120,11 @@ def getLikes(driver):
     '''
     likes = None
 
+    # sc-hKgILt eFWsxw sc-bqyKva glLlrc SalesProductInfoTable__WishlistButton-sc-1cslumm-2 bUSrQo
+
     try:
         likes = driver.find_elements_by_xpath(
-            "//button[contains(@class, 'sc-hKgILt eFWsxw sc-bqyKva glLlrc SalesProductInfoTable__WishlistButton-sc-1cslumm-2 bUSrQo')]/span[contains(@class, 'sc-eCssSg hmocIu')]")
+            "//button[contains(@class, 'sc-hKgILt eFYPau sc-bqyKva glLlrc SalesProductInfoTable__WishlistButton-sc-1cslumm-2 bUSrQo')]/span[contains(@class, 'sc-eCssSg hmocIu')]")
     except NoSuchElementException:
         pass
 
@@ -280,8 +282,6 @@ def getCommunityPosts(driver):
 
     if communityPost is not None:
         post = communityPost.text
-        countIndex = post.index("개")
-        postNum = post[:countIndex]
         return post
 
     else:
@@ -339,7 +339,7 @@ def getFeedbackNum(driver):
 
     try:
         feedbackNum = driver.find_elements_by_xpath(
-            "//span[contains(@class,'sc-jSgupP ckDfJz sc-bqyKva dBtbez LiveFeedbackSectionViewController__LiveFeedbackMoreButton-sc-1ahetk9-9 bYqCJB')]/a[contains(@class,'LinkComponent__StyledLink-gmbdn6-1 hYxdXM sc-dlfnbm sc-gKsewC bcaJjD BzhTL')]/span[contains(@class,'sc-eCssSg hmocIu')]")
+            "//button[contains(@class,'sc-jSgupP ckDfJz sc-bqyKva dBtbez LiveFeedbackSectionViewController__LiveFeedbackMoreButton-sc-1ahetk9-9 bYqCJB')]/a[contains(@class,'LinkComponent__StyledLink-gmbdn6-1 hYxdXM sc-dlfnbm sc-gKsewC bcaJjD BzhTL')]/span[contains(@class,'sc-eCssSg hmocIu')]")
     except NoSuchElementException:
         pass
 
@@ -445,7 +445,7 @@ def getCoupon(driver):
         return coupon[0].text
 
 
-def getClassInfo(driver, category):
+def getClassInfo(driver, category, classURL):
     '''
     Constructs and returns pandas DataFrame containing class information.
     '''
@@ -475,7 +475,7 @@ def getClassInfo(driver, category):
                               'communityPosts': [communityPosts], 'likes': [likes], 'feedbackPct': [feedbackPct], 'feedbackTime': [feedbackTime],
                               'feedbackNum': [feedbackNum], 'originalPrice': [originalPrice], 'discountAmount': [discountAmount], 'couponDiscount': [couponDiscount],
                               'installmentPeriod': [installment], 'discountPct': [discountPct], 'finalPrice': [finalPrice],
-                              'monthlyPayment': [monthly], 'coupon': [coupon], 'referenceDate': [referenceDate]})
+                              'monthlyPayment': [monthly], 'coupon': [coupon], 'referenceDate': [referenceDate], 'classURL': classURL})
 
     return classInfo
 
@@ -490,7 +490,7 @@ def scrapePage(driver, classLink, category):
                                       'reviewNum', 'satisfaction', 'communityPosts', 'likes',
                                       'feedbackPct', 'feedbackTime', 'feedbackNum',
                                       'originalPrice', 'discountAmount', 'couponDiscount', 'installmentPeriod',
-                                      'discountPct', 'monthlyPayment', 'coupon', 'referenceDate'])
+                                      'discountPct', 'monthlyPayment', 'coupon', 'referenceDate', 'classURL'])
 
     return classInfo
 
@@ -592,7 +592,7 @@ def scrapeAllPages(driver, mainURL, category, directoryPath):
 
     for classLink in allClassLinks:
         SeleniumOperation.scrape(driver, classLink)
-        classInfo = getClassInfo(driver, category)
+        classInfo = getClassInfo(driver, category, classLink)
         classDf = classDf.append(classInfo)
         tracker = tracker + 1
         print(f"completed: {tracker}")
