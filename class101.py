@@ -5,12 +5,6 @@ import time
 from datetime import datetime
 
 
-# url = "https://class101.net/search?category=604f1c9756c3676f1ed00305"
-
-# driver = SeleniumOperation.getHeadlessDriver()
-# driver.implicitly_wait(5)
-
-
 def extractText(webElements):
 
     text = ""
@@ -451,7 +445,7 @@ def getCoupon(driver):
         return coupon[0].text
 
 
-def getClassInfo(driver, url, category):
+def getClassInfo(driver, category):
     '''
     Constructs and returns pandas DataFrame containing class information.
     '''
@@ -486,16 +480,25 @@ def getClassInfo(driver, url, category):
     return classInfo
 
 
-# classInfo = getClassInfo(driver)
-# classInfo.to_csv("/Users/CheHoon/Desktop/sample.csv", encoding="utf-8")
-
-def scrapePage(driver, category):
+def scrapePage(driver, classLink, category):
     '''
-    Scrapes all the classInfos in a page and exports data as csv.
-    Returns accumulated pandas dataframe and number of classes in the page.
+    Returns pandas dataframe of information of a class.
     '''
 
-    # clicking on individual class
+    classInfo = pd.DataFrame(columns=['className', 'category', 'topic', 'level', 'duration',
+                             'chapters', 'lessons', 'startDate', 'subtitles', 'creatorName', 'creatorSocialMedia',
+                                      'reviewNum', 'satisfaction', 'communityPosts', 'likes',
+                                      'feedbackPct', 'feedbackTime', 'feedbackNum',
+                                      'originalPrice', 'discountAmount', 'couponDiscount', 'installmentPeriod',
+                                      'discountPct', 'monthlyPayment', 'coupon', 'referenceDate'])
+
+    return classInfo
+
+
+def getClassLinks(driver):
+    '''
+    Returns the list of class links
+    '''
     classAddress = driver.find_elements_by_xpath(
         "//a[contains(@class, 'ProductCardfragment__HoverStyledLink-sc-1cja13i-0 gfCFNQ')]")
 
@@ -508,34 +511,63 @@ def scrapePage(driver, category):
         if 'products' in classlink:
             addressList.append(classlink)
 
-    classInfo = pd.DataFrame(columns=['className', 'category', 'topic', 'level', 'duration',
-                             'chapters', 'lessons', 'startDate', 'subtitles', 'creatorName', 'creatorSocialMedia',
-                                      'reviewNum', 'satisfaction', 'communityPosts', 'likes',
-                                      'feedbackPct', 'feedbackTime', 'feedbackNum',
-                                      'originalPrice', 'discountAmount', 'couponDiscount', 'installmentPeriod',
-                                      'discountPct', 'monthlyPayment', 'coupon', 'referenceDate'])
+    return addressList
 
-    counter = 1
 
-    driver.execute_script(
-        "window.open()")
+def scrapeClassLinks(driver, mainURL):
+    '''
+    Returns the links of classes in specified category
+    '''
 
-    driver.switch_to.window(driver.window_handles[1])
+    pageNum = 1
 
-    for address in addressList:
-        SeleniumOperation.scrape(driver, address)
-        classDF = getClassInfo(driver, address, category)
-        classInfo = classInfo.append(classDF)
-        print("scraped element number: ", counter)
-        counter = counter + 1
+    allClasses = []
 
-    driver.close()
+    # scroll first page
+    SeleniumOperation.scrape(driver, mainURL)
 
-    driver.switch_to.window(driver.window_handles[0])
-    # classInfo.to_csv(
-    #     f"/Users/CheHoon/Desktop/{category}.csv", encoding="utf-8")
+    # get class links from first page
+    addressList = getClassLinks(driver)
+    allClasses += addressList
 
-    return classInfo, len(addressList)
+    print(f"Retreived links from page: {pageNum}")
+
+    buttons = driver.find_elements_by_xpath(
+        "//button[@class='sc-hKgILt eFYPau sc-crrsfI MdKCt sc-dtwoBo inCwUZ']")
+
+    numButtons = len(buttons)
+
+    if numButtons == 0:
+        return allClasses
+
+    else:
+        driver.execute_script("arguments[0].click();", buttons[0])
+
+    while True:
+
+        SeleniumOperation.scroll(driver, 8)
+
+        addressList = getClassLinks(driver)
+        numClasses = len(addressList)
+        allClasses += addressList
+
+        buttons = driver.find_elements_by_xpath(
+            "//button[@class='sc-hKgILt eFWsxw sc-crrsfI MdKCt sc-dtwoBo inCwUZ']")
+        numButtons = len(buttons)
+
+        pageNum = pageNum + 1
+        print(f"Retreived links from page: {pageNum}")
+
+        if numClasses < 30:
+            print("Reached last page")
+            break
+        if numClasses == 30 and numButtons == 1:
+            print("Reached last page")
+            break
+
+        driver.execute_script("arguments[0].click();", buttons[1])
+
+    return allClasses
 
 
 def scrapeAllPages(driver, mainURL, category, directoryPath):
@@ -543,63 +575,25 @@ def scrapeAllPages(driver, mainURL, category, directoryPath):
     Scrapes and exports all classes in a category as csv files.
     '''
 
-    # keep track of pageNum
-    pageNum = 1
+    classDf = pd.DataFrame(columns=['className', 'category', 'topic', 'level', 'duration',
+                                    'chapters', 'lessons', 'startDate', 'subtitles', 'creatorName', 'creatorSocialMedia',
+                                    'reviewNum', 'satisfaction', 'communityPosts', 'likes',
+                                    'feedbackPct', 'feedbackTime', 'feedbackNum',
+                                    'originalPrice', 'discountAmount', 'couponDiscount', 'installmentPeriod',
+                                    'discountPct', 'monthlyPayment', 'coupon', 'referenceDate'])
 
-    SeleniumOperation.scrape(driver, mainURL)
-    classInfo, numClasses = scrapePage(driver, category)
+    allClassLinks = scrapeClassLinks(driver, mainURL)
 
-    buttons = driver.find_elements_by_xpath(
-        "//button[@class='sc-hKgILt eFWsxw sc-crrsfI MdKCt sc-dtwoBo inCwUZ']")
+    numClasses = len(allClassLinks)
 
-    numButtons = len(buttons)
+    print(f"total number of classes: {numClasses}")
+    tracker = 0
 
-    # export first page as csv
-    classInfo.to_csv(
-        f"{directoryPath}/{category}-{pageNum}.csv", encoding="utf-8")
+    for classLink in allClassLinks:
+        SeleniumOperation.scrape(driver, classLink)
+        classInfo = getClassInfo(driver, category)
+        classDf = classDf.append(classInfo)
+        tracker = tracker + 1
+        print(f"completed: {tracker}")
 
-    print(f"completed page: {pageNum}")
-
-    if numButtons == 0:
-        driver.quit()
-        return
-
-    else:
-        pageNum = pageNum + 1
-        driver.execute_script("arguments[0].click();", buttons[0])
-
-    while True:
-
-        SeleniumOperation.scroll(driver, 8)
-        classInfo, numClasses = scrapePage(driver, category)
-        buttons = driver.find_elements_by_xpath(
-            "//button[@class='sc-hKgILt eFWsxw sc-crrsfI MdKCt sc-dtwoBo inCwUZ']")
-        numButtons = len(buttons)
-
-        classInfo.to_csv(
-            f"{directoryPath}/{category}-{pageNum}.csv", encoding="utf-8")
-
-        pageNum = pageNum + 1
-        print(f"completed page: {pageNum}")
-
-        if numClasses < 30:
-            print("completed last page")
-            break
-        if numClasses == 30 and numButtons == 1:
-            print("completed last page")
-            break
-
-        driver.execute_script("arguments[0].click();", buttons[1])
-
-
-# now = datetime.now()
-# current_time = now.strftime("%H:%M:%S")
-# print("Current Time =", current_time)
-
-# scrapeAllPages(driver, url, "pen", "/Users/CheHoon/Desktop/class101Data")
-
-# now = datetime.now()
-# current_time = now.strftime("%H:%M:%S")
-# print("Current Time =", current_time)
-
-# driver.quit()
+    classDf.to_csv(f"{directoryPath}/{category}.csv")
