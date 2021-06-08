@@ -511,7 +511,9 @@ def getClassLinks(driver):
         if 'products' in classlink:
             addressList.append(classlink)
 
-    return addressList
+    numClasses = len(classAddress)
+
+    return addressList, numClasses
 
 
 def scrapeClassLinks(driver, mainURL):
@@ -527,7 +529,7 @@ def scrapeClassLinks(driver, mainURL):
     SeleniumOperation.scrape(driver, mainURL)
 
     # get class links from first page
-    addressList = getClassLinks(driver)
+    addressList, numClasses = getClassLinks(driver)
     allClasses += addressList
 
     print(f"Retreived links from page: {pageNum}")
@@ -547,12 +549,11 @@ def scrapeClassLinks(driver, mainURL):
 
         SeleniumOperation.scroll(driver, 8)
 
-        addressList = getClassLinks(driver)
-        numClasses = len(addressList)
+        addressList, numClasses = getClassLinks(driver)
         allClasses += addressList
 
         buttons = driver.find_elements_by_xpath(
-            "//button[@class='sc-hKgILt eFWsxw sc-crrsfI MdKCt sc-dtwoBo inCwUZ']")
+            "//button[@class='sc-hKgILt eFYPau sc-crrsfI MdKCt sc-dtwoBo inCwUZ']")
         numButtons = len(buttons)
 
         pageNum = pageNum + 1
