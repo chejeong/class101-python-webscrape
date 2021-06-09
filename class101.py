@@ -348,8 +348,6 @@ def getFeedbackNum(driver):
 
     else:
         numFeedback = extractText(feedbackNum)
-        countIndex = numFeedback.index("개")
-        numFeedback = numFeedback[:countIndex]
 
         return numFeedback
 
@@ -404,7 +402,10 @@ def getTitle(driver):
     except NoSuchElementException:
         pass
 
-    return title[1].text
+    classTitle = extractText(title)
+
+    # title[1].text
+    return classTitle
 
 
 def getClassDuration(driver):
@@ -474,8 +475,8 @@ def getClassInfo(driver, category, classURL):
                               'creatorSocialMedia': [creatorSocialMedia], 'reviewNum': [reviewNum], 'satisfaction': [satisfaction],
                               'communityPosts': [communityPosts], 'likes': [likes], 'feedbackPct': [feedbackPct], 'feedbackTime': [feedbackTime],
                               'feedbackNum': [feedbackNum], 'originalPrice': [originalPrice], 'discountAmount': [discountAmount], 'couponDiscount': [couponDiscount],
-                              'installmentPeriod': [installment], 'discountPct': [discountPct], 'finalPrice': [finalPrice],
-                              'monthlyPayment': [monthly], 'coupon': [coupon], 'referenceDate': [referenceDate], 'classURL': classURL})
+                              'finalPrice': [finalPrice], 'installmentPeriod': [installment], 'discountPct': [discountPct],
+                              'monthlyPayment': [monthly], 'coupon': [coupon], 'referenceDate': [referenceDate], 'classURL': [classURL]})
 
     return classInfo
 
@@ -489,7 +490,7 @@ def scrapePage(driver, classLink, category):
                              'chapters', 'lessons', 'startDate', 'subtitles', 'creatorName', 'creatorSocialMedia',
                                       'reviewNum', 'satisfaction', 'communityPosts', 'likes',
                                       'feedbackPct', 'feedbackTime', 'feedbackNum',
-                                      'originalPrice', 'discountAmount', 'couponDiscount', 'installmentPeriod',
+                                      'originalPrice', 'discountAmount', 'couponDiscount', 'finalPrice', 'installmentPeriod',
                                       'discountPct', 'monthlyPayment', 'coupon', 'referenceDate', 'classURL'])
 
     return classInfo
@@ -580,8 +581,8 @@ def scrapeAllPages(driver, mainURL, category, directoryPath):
                                     'chapters', 'lessons', 'startDate', 'subtitles', 'creatorName', 'creatorSocialMedia',
                                     'reviewNum', 'satisfaction', 'communityPosts', 'likes',
                                     'feedbackPct', 'feedbackTime', 'feedbackNum',
-                                    'originalPrice', 'discountAmount', 'couponDiscount', 'installmentPeriod',
-                                    'discountPct', 'monthlyPayment', 'coupon', 'referenceDate'])
+                                    'originalPrice', 'discountAmount', 'couponDiscount', 'finalPrice', 'installmentPeriod',
+                                    'discountPct', 'monthlyPayment', 'coupon', 'referenceDate', 'classURL'])
 
     allClassLinks = scrapeClassLinks(driver, mainURL)
 
