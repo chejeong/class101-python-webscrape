@@ -3,9 +3,7 @@ import SeleniumOperation
 from datetime import datetime
 
 
-urlCollection = {
-    'DIY라이프및기타': 'https://class101.net/search?category=5f9fbe8a5512a2230f09936a&page=1&sort=likedOrder',
-    'DIY미술키트': 'https://class101.net/search?category=5f9fbe8a5512a2230f099364&page=1&sort=likedOrder'}
+urlCollection = {}
 
 driver = SeleniumOperation.getHeadlessDriver()
 driver.implicitly_wait(5)
