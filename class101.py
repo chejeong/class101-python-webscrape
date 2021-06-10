@@ -311,10 +311,25 @@ def getPrices(driver):
     prices = driver.find_elements_by_xpath(
         "//dd[contains(@class,'PriceDescriptionList__DescriptionText-sc-1k21asc-3 jJijyx')]")
 
-    originalPrice = prices[0].text
-    discountAmount = prices[1].text
-    couponDiscount = prices[2].text
-    finalPrice = prices[3].text
+    try:
+        originalPrice = prices[0].text
+    except IndexError:
+        originalPrice = None
+
+    try:
+        discountAmount = prices[1].text
+    except IndexError:
+        discountAmount = None
+
+    try:
+        couponDiscount = prices[2].text
+    except IndexError:
+        couponDiscount = None
+
+    try:
+        finalPrice = prices[3].text
+    except IndexError:
+        finalPrice = None
 
     # sc-dQppl fNfNrx PriceInfoTable__TermText-sc-1asmm9b-3 cVjuSB
     installment = driver.find_elements_by_xpath(
