@@ -35,6 +35,6 @@ def getHeadlessDriver():
     return driver
 
 
-def scrape(search_url, driver):
+def scrape(driver, search_url):
     driver.get(search_url)
     scroll(driver, 10)

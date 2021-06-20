@@ -3,7 +3,8 @@ import SeleniumOperation
 from datetime import datetime
 
 
-urlCollection = {}
+urlCollection = {
+    "instrument": "https://class101.net/search?category=604f1c9756c3676f1ed00366&page=1&sort=likedOrder"}
 
 driver = SeleniumOperation.getHeadlessDriver()
 driver.implicitly_wait(5)
@@ -15,7 +16,7 @@ for classtopic, url in urlCollection.items():
     print("Current Time =", current_time)
 
     class101.scrapeAllPages(
-        driver, url, classtopic, "/Users/CheHoon/Desktop/class101Data")
+        driver, url, classtopic, "/Users/CheHoon/Desktop/experimentData")
 
     now = datetime.now()
     current_time = now.strftime("%H:%M:%S")

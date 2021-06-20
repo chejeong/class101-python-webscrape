@@ -1,5 +1,6 @@
-install.packages("dplyr")
-library("dplyr")
+install.packages("writexl")
+library("writexl")
+
 
 getwd()
 setwd("/Users/CheHoon/cheprojects/class101")
@@ -62,12 +63,12 @@ df$installmentPeriodInMonths <- gsub("개월 할부","",df$installmentPeriodInMo
 df$installmentPeriodInMonths <- as.numeric(df$installmentPeriodInMonths)
 
 #clean social media
-df2 <- df %>% select(classURL, creatorName, creatorSocialMedia)
+df2 <- df %>% select(creatorName, creatorSocialMedia)
 index <- which(df2$creatorSocialMedia=="")
 df2 <- df2[-c(index),]
 
 
-df3 <- data.frame(classURL = character(), creatorName = character(), creatorSocialMedia = character())
+df3 <- data.frame(creatorSocialMedia = character())
 
 for (i in 1:nrow(df2)) {
   
@@ -78,12 +79,28 @@ for (i in 1:nrow(df2)) {
   for (j in 1:length(snslinks)) {
     
     creatorSocialMedia = snslinks[j]
-    df_row <- data.frame("classURL" = classURL, "creatorName" = creatorName, "creatorSocialMedia" = creatorSocialMedia)
+    df_row <- data.frame("creatorName" = creatorName, "creatorSocialMedia" = creatorSocialMedia)
     df3 <- rbind(df3, df_row)
     
   }
   
 }
 
-View(df3)
+#sort by creatorName
+df3 <- df3[order(df3['creatorName']),]
+#drop duplicates
+df3 <- unique(df3)
+
+df <- df[-c(11,29)]
+
+
+#export as excel files
+write_xlsx(df, "/Users/CheHoon/Desktop/Class101Data.xlsx")
+write_xlsx(df3, "/Users/CheHoon/Desktop/Class101CreatorSocialMedia.xlsx")
+
+
+
+
+
+
 
