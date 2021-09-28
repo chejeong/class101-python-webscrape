@@ -3,6 +3,8 @@
 ### Brief Overview
 Webscraping project to collect data from Class101, an online learning platform based in Korea: https://class101.net/ 
 
+Blogpost of basic exploratory data analysis on number of likes of courses (written in Korean): https://chenotjay.tistory.com/3
+
 Contained within the `Data` directory are tabular data files created from the scraped data. Detailed descriptions of the columns in each file are provided below:
 
 **Class101DataClean.xlsx**
